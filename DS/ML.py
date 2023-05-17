@@ -137,16 +137,16 @@ def load_raw_data(raw_df):
     return x, x_pca, y
 
 
-def CheckPCA(data, y , fisi=(10, 8)):
-
+def CheckPCA(data, y, fisi=(10, 8)):
+    # Perform PCA on the data
     pca = PCA()  # Default n_components = min(n_samples, n_features)
     pca.fit_transform(data)
     exp_var_pca = pca.explained_variance_ratio_
-    Cumulative sum of eigenvalues; This will be used to create step plot
-    for visualizing the variance explained by each principal component.
+
+    # Calculate the cumulative sum of eigenvalues to visualize the variance explained by each principal component
     cum_sum_eigenvalues = np.cumsum(exp_var_pca)
 
-    Create the visualization plot
+    # Create a visualization plot for explained variance and cumulative explained variance
     plt.figure(figsize=fisi)
     plt.bar(range(0, len(exp_var_pca)), exp_var_pca, alpha=0.5, align='center',
             label='Individual explained variance')
@@ -154,11 +154,12 @@ def CheckPCA(data, y , fisi=(10, 8)):
              label='Cumulative explained variance')
     plt.ylabel('Explained variance ratio')
     plt.xlabel('Principal component index')
-    plt.title(f'PCA ', fontsize=18)
+    plt.title('PCA', fontsize=18)
     plt.legend(loc='best')
     plt.tight_layout()
     plt.show()
 
+    # Determine the number of principal components that explain at least 98% of the variance
     sum = 0
     c = 0
     for i in exp_var_pca:
@@ -166,26 +167,36 @@ def CheckPCA(data, y , fisi=(10, 8)):
             sum += i
             c += 1
 
-    if (c > int(0.8 * len(exp_var_pca))):
+    # Check if the recommended number of components is greater than 80% of the total number of components
+    if c > int(0.8 * len(exp_var_pca)):
         print("PCA not recommended")
-
     else:
+        # Perform PCA with the recommended number of components
         pca1 = PCA(n_components=c)  # contains 90% of the variance
         data = pca1.fit_transform(data)
+
+        # Plot the first principal component against the target variable 'y'
         plot = plt.scatter(data[:, 0], y)
         plt.show()
+
+        # Plot a 3D scatter plot with the first two principal components and the target variable 'y'
         plt.legend(handles=plot.legend_elements()[0], labels=list(winedata['target_names']))
         fig = plt.figure(figsize=plt.figaspect(0.5))
         ax = fig.add_subplot(projection='3d')
-        ax.scatter3D(data[:, 0] , data[:, 1], y)
-        threeD_view1 = ax.view_init(0,0)
+        ax.scatter3D(data[:, 0], data[:, 1], y)
+        threeD_view1 = ax.view_init(0, 0)
         threeD_view2 = ax.view_init(45, 0)
         threeD_view3 = ax.view_init(45, 215)
         plt.show()
+
+        # Save the three 3D views as separate image files
         plt.savefig('threeD_view1.png')
         threeD_view2.savefig('threeD_view2.png')
         threeD_view3.savefig('threeD_view3.png')
-        print("PCA with ", c, "components (90% variance)")
+
+        # Print the number of components used and indicate the percentage of variance explained
+        print("PCA with", c, "components (90% variance)")
+
     return data
 
 
@@ -193,56 +204,71 @@ def FindBestParams(model, space, x_train, y_train):
     res = []  # Return the saved arrays
     models = ["DecisionTreeRegressor", "RandomForestRegressor", "XGBRegressor"]
 
+    # Iterate over each model
     for m in range(0, len(model)):
-        print("---- Starting Gridsearch on model " , model[m])
+        print("---- Starting Gridsearch on model", model[m])
+
+        # Perform grid search using GridSearchCV
         clf = GridSearchCV(model[m], space[m], scoring='neg_mean_squared_log_error', verbose=2)
         clf.fit(x_train, y_train)
 
-        print("Best parameters set found on development set: ", models[m])
+        # Print the best parameters found for the current model
+        print("Best parameters set found on development set:", models[m])
         print()
         print(clf.best_params_)
         print()
 
-        # res.append([clf, models[m], model[m], clf.best_estimator_, clf.best_params_])
+        # Save the grid search results
         res.append(clf)
+
+    # Return the saved results
     return res
 
 
 def SplitPcaScale(x, y):
+    # Scale the features using StandardScaler
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(x)
 
+    # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.1)
 
+    # Return the split data
     return X_train, X_test, y_train, y_test
 
-
-# rmsle calculation
+# Root Mean Squared Logarithmic Error (RMSLE) calculation
 def rmsle(y_test, predictions):
+    # Replace negative predictions with 0
     predictions = [0 if i < 0 else i for i in predictions]
+    
+    # Calculate RMSLE using mean_squared_log_error and np.sqrt
     return np.sqrt(mean_squared_log_error(y_test, predictions))
 
 
-# test merged -> x train, y train
+# RMSLEGraph function to compare RMSLE results between models
 def RMSLEGraph(res, x_test, y_test):
+    rmsle_train = []  # List to store RMSLE scores for training set
+    rmsle_val = []  # List to store RMSLE scores for validation set
 
-    rmsle_train = []
-    rmsle_val = []
-
+    # Iterate over each model
     for key in range(0, len(res)):
-        rmsle_train.append(np.sqrt(-1*res[key].best_score_))
+        # Calculate RMSLE score for training set
+        rmsle_train.append(np.sqrt(-1 * res[key].best_score_))
+        
+        # Predict on the test set using the best estimator and calculate RMSLE score for validation set
         y_hat = res[key].best_estimator_.predict(x_test)
         rmsle_val.append(rmsle(y_test, y_hat))
 
     x = ["DecisionTreeRegressor", "RandomForestRegressor"]
 
     x_axis = np.arange(len(x))
-    plt.bar(x_axis - 0.2,rmsle_val, 0.4 , label= 'RMSLE validation results')
-    plt.bar(x_axis + 0.2 ,rmsle_train, 0.4, label= 'RMSLE train results')
-    plt.xticks(x_axis,x)
+    plt.bar(x_axis - 0.2, rmsle_val, 0.4, label='RMSLE validation results')
+    plt.bar(x_axis + 0.2, rmsle_train, 0.4, label='RMSLE train results')
+    plt.xticks(x_axis, x)
     plt.xlabel("Used Models")
-    plt.ylabel("RMSLE validaiton/train results")
+    plt.ylabel("RMSLE validation/train results")
     plt.title("RMSLE result comparison between models")
+    plt.legend()
     plt.show()
 
 if __name__ == '__main__':
