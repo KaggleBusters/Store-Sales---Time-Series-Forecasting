@@ -72,18 +72,18 @@ def trainEDA(train_merged, test_merged):
     unique_values.plot.bar(logy=True, figsize=(15, 4), title="Unique values per feature")
     plt.show()
 
-    plot missing values
+   # plot missing values
     plt.figure(figsize=(10, 8))
     plt.imshow(train_merged.isna(), aspect="auto", interpolation="nearest", cmap="gray")
     plt.xlabel("Column Number")
     plt.ylabel("Sample Number")
     plt.show()
 
-    count the family columns
+    #count the family columns
     train_merged['family'].value_counts().plot(kind='bar')
     plt.show()
 
-    sublots
+   # sublots
     train_merged.plot(lw=0, marker=".", subplots=True, layout=(-1, 4), figsize=(15, 5), markersize=1)
     plt.show()
 
