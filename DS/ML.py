@@ -137,7 +137,6 @@ def load_raw_data(raw_df):
     return x, x_pca, y
 
 # used to lower the deimnsional space of a data set while retaining most important info 
-#
 
 def CheckPCA(data, y, fisi=(10, 8)):
     # Perform PCA on the data
@@ -231,7 +230,7 @@ def FindBestParams(model, space, x_train, y_train):
 
 
 def SplitPcaScale(x, y):
-    # Scale the features using StandardScaler
+    # Scale the features using StandardScaler  to ensures that both training and testing data are scaled in consistent manner
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(x)
 
