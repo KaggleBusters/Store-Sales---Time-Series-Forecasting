@@ -136,14 +136,16 @@ def load_raw_data(raw_df):
 
     return x, x_pca, y
 
+# used to lower the deimnsional space of a data set while retaining most important info 
+#
 
 def CheckPCA(data, y, fisi=(10, 8)):
     # Perform PCA on the data
     pca = PCA()  # Default n_components = min(n_samples, n_features)
     pca.fit_transform(data)
-    exp_var_pca = pca.explained_variance_ratio_
+    exp_var_pca = pca.explained_variance_ratio_ # variance ration of each component calculated and stored in exp_var_pca
 
-    # Calculate the cumulative sum of eigenvalues to visualize the variance explained by each principal component
+    # Calculate the cumulative sum of eigenvalues (magnitude/importance) to visualize the variance explained by each principal component
     cum_sum_eigenvalues = np.cumsum(exp_var_pca)
 
     # Create a visualization plot for explained variance and cumulative explained variance
@@ -199,6 +201,9 @@ def CheckPCA(data, y, fisi=(10, 8)):
 
     return data
 
+# performs a grind search to find the best hyperparameters for a given model
+# the function runs on a list of models and find the best hyper parameter spaces for each models
+#the best parameters are stored in res 
 
 def FindBestParams(model, space, x_train, y_train):
     res = []  # Return the saved arrays
