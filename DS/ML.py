@@ -83,7 +83,7 @@ def trainEDA(train_merged, test_merged):
     train_merged['family'].value_counts().plot(kind='bar')
     plt.show()
 
-   # sublots
+   # subplots
     train_merged.plot(lw=0, marker=".", subplots=True, layout=(-1, 4), figsize=(15, 5), markersize=1)
     plt.show()
 
